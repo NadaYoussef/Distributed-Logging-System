@@ -1,31 +1,40 @@
-[Route("v1/logs")]
-[ApiController]
-public class LogsController : ControllerBase
+using Distributed_logging_System.Model;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Distributed-Logging-System.Controllers
 {
-    private readonly ILogStorage _logStorage;
-
-    public LogsController(ILogStorage logStorage)
+    [Route("v1/logs")]
+    [ApiController]
+    public class LogsController : ControllerBase
     {
-        _logStorage = logStorage;
-    }
+        private readonly ILogStorage _logStorage;
 
-    [HttpPost]
-    public async Task<IActionResult> StoreLog([FromBody] LogEntry logEntry)
-    {
-        // Validation
-        if (logEntry == null || string.IsNullOrEmpty(logEntry.Service) || string.IsNullOrEmpty(logEntry.Level) || string.IsNullOrEmpty(logEntry.Message))
+        public LogsController(ILogStorage logStorage)
         {
-            return BadRequest("Invalid log entry.");
+            _logStorage = logStorage;
         }
 
-        await _logStorage.StoreLogAsync(logEntry);
-        return Ok();
-    }
+        [HttpPost]
+        public async Task<IActionResult> PostLog([FromBody] LogEntry logEntry)
+        {
+            if (logEntry == null || !Enum.IsDefined(typeof(LogLevel), logEntry.Level))
+                return BadRequest("Invalid log entry.");
 
-    [HttpGet]
-    public async Task<IActionResult> GetLogs([FromQuery] LogFilter filter)
-    {
-        var logs = await _logStorage.RetrieveLogsAsync(filter);
-        return Ok(logs);
+            await _logStorage.StoreLogAsync(logEntry);
+            return Ok();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLogs([FromQuery] string service, [FromQuery] string level,
+                                                  [FromQuery] DateTime? startTime, [FromQuery] DateTime? endTime)
+        {
+            var logs = await _logStorage.GetLogsAsync(service, level, startTime, endTime);
+            return Ok(logs);
+        }
     }
 }
