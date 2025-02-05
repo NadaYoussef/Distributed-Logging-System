@@ -1,24 +1,44 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LogEntry, LogFilter } from '../models/log-entry.model';
+
+export interface LogEntry {
+  service: string;
+  level: string;
+  message: string;
+  timestamp: string;
+}
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: 'root'
 })
 export class LogService {
-  private apiUrl = 'http://localhost:5000/v1/logs';  
+  private apiUrl = 'http://localhost:5000/v1/logs'; // Adjust URL based on your backend API
 
   constructor(private http: HttpClient) {}
 
-  getLogs(filters: LogFilter): Observable<LogEntry[]> {
+  // Fetch logs with filters and pagination
+  getLogs(
+    service?: string,
+    level?: string,
+    startTime?: string,
+    endTime?: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Observable<LogEntry[]> {
     let params = new HttpParams();
 
-    if (filters.service) params = params.set('service', filters.service);
-    if (filters.level) params = params.set('level', filters.level);
-    if (filters.startTime) params = params.set('startTime', filters.startTime);
-    if (filters.endTime) params = params.set('endTime', filters.endTime);
+    if (service) params = params.set('service', service);
+    if (level) params = params.set('level', level);
+    if (startTime) params = params.set('start_time', startTime);
+    if (endTime) params = params.set('end_time', endTime);
+    params = params.set('page', page.toString());
+    params = params.set('pageSize', pageSize.toString());
 
     return this.http.get<LogEntry[]>(this.apiUrl, { params });
+  }
+  
+  getLogDetails(id: string): Observable<LogEntry> {
+    return this.http.get<LogEntry>(`${this.apiUrl}/${id}`);
   }
 }
