@@ -1,34 +1,49 @@
-public class DbLogStorage : ILogStorage
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Distributed_logging_System.Model
 {
-    private readonly DbContext _dbContext;
-
-    public DbLogStorage(DbContext dbContext)
+    public class LogDbContext : DbContext
     {
-        _dbContext = dbContext;
+        public DbSet<LogEntry> Logs { get; set; }
     }
 
-    public async Task StoreLogAsync(LogEntry logEntry)
+    public class DatabaseStorage : ILogStorage
     {
-        _dbContext.LogEntries.Add(logEntry);
-        await _dbContext.SaveChangesAsync();
+        private readonly LogDbContext _dbContext;
+
+        public DatabaseStorage(LogDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public async Task StoreLogAsync(LogEntry logEntry)
+        {
+            await _dbContext.Logs.AddAsync(logEntry);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<LogEntry>> GetLogsAsync(string service, string level, DateTime? startTime, DateTime? endTime)
+        {
+            var query = _dbContext.Logs.AsQueryable();
+
+            if (!string.IsNullOrEmpty(service))
+                query = query.Where(log => log.Service == service);
+
+            if (!string.IsNullOrEmpty(level))
+                query = query.Where(log => log.Level == level);
+
+            if (startTime.HasValue)
+                query = query.Where(log => log.Timestamp >= startTime);
+
+            if (endTime.HasValue)
+                query = query.Where(log => log.Timestamp <= endTime);
+
+            return await query.ToListAsync();
+        }
     }
 
-    public async Task<List<LogEntry>> RetrieveLogsAsync(LogFilter filter)
-    {
-        IQueryable<LogEntry> query = _dbContext.LogEntries;
-
-        if (!string.IsNullOrEmpty(filter.Service))
-            query = query.Where(log => log.Service == filter.Service);
-
-        if (!string.IsNullOrEmpty(filter.Level))
-            query = query.Where(log => log.Level == filter.Level);
-
-        if (filter.StartTime.HasValue)
-            query = query.Where(log => log.Timestamp >= filter.StartTime.Value);
-
-        if (filter.EndTime.HasValue)
-            query = query.Where(log => log.Timestamp <= filter.EndTime.Value);
-
-        return await query.ToListAsync();
-    }
 }
