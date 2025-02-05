@@ -1,50 +1,57 @@
 import { Component, OnInit } from '@angular/core';
-import { LogService } from '../../services/log.service';
-import { LogEntry, LogFilter } from '../../models/log-entry.model';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { LogService, LogEntry } from '../log.service';
 
 @Component({
   selector: 'app-log-list',
   templateUrl: './log-list.component.html',
-  styleUrls: ['./log-list.component.css'],
+  styleUrls: ['./log-list.component.css']
 })
 export class LogListComponent implements OnInit {
   logs: LogEntry[] = [];
-  displayedColumns: string[] = ['timestamp', 'service', 'level', 'message'];
-  dataSource: MatTableDataSource<LogEntry> = new MatTableDataSource();
-  filters: LogFilter = {};
-  @ViewChild(MatPaginator) paginator: MatPaginator | undefined;
-  @ViewChild(MatSort) sort: MatSort | undefined;
+  filter = {
+    service: '',
+    level: '',
+    startTime: '',
+    endTime: ''
+  };
+  currentPage = 1;
+  pageSize = 10;
+  totalLogs = 0; // This should be set by your backend response if pagination is supported
 
-  
   constructor(private logService: LogService) {}
 
   ngOnInit(): void {
-    this.getLogs();  
-  }
- 
-  getLogs(): void {
-    this.logService.getLogs(this.filters).subscribe((logs) => {
-      this.logs = logs;
-      this.dataSource.data = this.logs;
-    });
+    this.loadLogs();
   }
 
-  applyFilter(service: string, level: string, startTime: string, endTime: string): void {
-    this.filters = {
-      service,
-      level,
-      startTime: startTime,
-      endTime: endTime,
+  loadLogs(): void {
+    const { service, level, startTime, endTime } = this.filter;
+    this.logService
+      .getLogs(service, level, startTime, endTime, this.currentPage, this.pageSize)
+      .subscribe((logs) => {
+        this.logs = logs;
+        // Assuming your backend returns total number of logs for pagination
+        this.totalLogs = 100; // Replace this with dynamic value from the API
+      });
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadLogs();
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1; // Reset to first page on filter change
+    this.loadLogs();
+  }
+
+  onClearFilter(): void {
+    this.filter = {
+      service: '',
+      level: '',
+      startTime: '',
+      endTime: ''
     };
-    this.getLogs();
-  }
-
-
-  ngAfterViewInit() {
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    this.loadLogs();
   }
 }
