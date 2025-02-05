@@ -1,0 +1,32 @@
+<div *ngIf="log; else loading">
+  <h2>Log Details</h2>
+  <div class="log-details-container">
+    <div class="log-detail">
+      <strong>Service:</strong>
+      <p>{{ log.service }}</p>
+    </div>
+
+    <div class="log-detail">
+      <strong>Level:</strong>
+      <p>{{ log.level }}</p>
+    </div>
+
+    <div class="log-detail">
+      <strong>Message:</strong>
+      <p>{{ log.message }}</p>
+    </div>
+
+    <div class="log-detail">
+      <strong>Timestamp:</strong>
+      <p>{{ log.timestamp | date: 'yyyy-MM-dd HH:mm:ss' }}</p>
+    </div>
+  </div>
+
+  <button class="back-button" routerLink="/">Back to Log List</button>
+</div>
+
+<ng-template #loading>
+  <div class="loading">
+    <p>Loading log details...</p>
+  </div>
+</ng-template>
