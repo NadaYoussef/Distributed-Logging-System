@@ -29,9 +29,8 @@ export class LogListComponent implements OnInit {
     this.logService
       .getLogs(service, level, startTime, endTime, this.currentPage, this.pageSize)
       .subscribe((logs) => {
-        this.logs = logs;
-        // Assuming your backend returns total number of logs for pagination
-        this.totalLogs = 100; // Replace this with dynamic value from the API
+        this.logs = logs; 
+        this.totalLogs = 10000; 
       });
   }
 
@@ -41,7 +40,7 @@ export class LogListComponent implements OnInit {
   }
 
   onFilterChange(): void {
-    this.currentPage = 1; // Reset to first page on filter change
+    this.currentPage = 1; 
     this.loadLogs();
   }
 
@@ -53,5 +52,9 @@ export class LogListComponent implements OnInit {
       endTime: ''
     };
     this.loadLogs();
+  }
+
+  onRowClick(row: LogEntry): void {
+    this.router.navigate(['/log', row.timestamp]);
   }
 }
