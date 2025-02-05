@@ -14,12 +14,15 @@ export class LogListComponent implements OnInit {
   logs: LogEntry[] = [];
   displayedColumns: string[] = ['timestamp', 'service', 'level', 'message'];
   dataSource: MatTableDataSource<LogEntry> = new MatTableDataSource();
-  filters: LogFilter = {};  // Filter object
+  filters: LogFilter = {};
+  @ViewChild(MatPaginator) paginator: MatPaginator | undefined;
+  @ViewChild(MatSort) sort: MatSort | undefined;
 
+  
   constructor(private logService: LogService) {}
 
   ngOnInit(): void {
-    this.getLogs();  // Initial fetch of logs
+    this.getLogs();  
   }
  
   getLogs(): void {
@@ -39,9 +42,6 @@ export class LogListComponent implements OnInit {
     this.getLogs();
   }
 
-  
-  @ViewChild(MatPaginator) paginator: MatPaginator | undefined;
-  @ViewChild(MatSort) sort: MatSort | undefined;
 
   ngAfterViewInit() {
     this.dataSource.paginator = this.paginator;
